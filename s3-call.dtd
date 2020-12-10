@@ -1,0 +1,30 @@
+<!ATTLIST Channel type (RESTAdapter|MQTTAdapter|DBAdapter|GESTPAYCryptDecryptAdapter|GESTPAYs2sAdapter|S3Adapter) #IMPLIED>
+
+<!--
+    Configure a S3 Bucket call.
+-->
+<!ELEMENT s3-call (Description)>
+
+<!-- fixed parameter with value "it.greenvulcano.gvesb.virtual.s3.S3Call" -->
+<!ATTLIST s3-call class CDATA #FIXED "it.greenvulcano.gvesb.virtual.s3.S3Call">
+
+<!-- fixed parameter with value "call" -->
+<!ATTLIST s3-call type CDATA #FIXED "call">
+
+<!-- the name of the operation -->
+<!ATTLIST s3-call name CDATA #REQUIRED>
+
+<!-- The S3 bucket -->
+<!ATTLIST s3-call bucket CDATA #REQUIRED>
+
+<!-- The S3 akid -->
+<!ATTLIST s3-call akid CDATA #REQUIRED>
+
+<!-- The S3 skid -->
+<!ATTLIST s3-call skid CDATA #REQUIRED>
+
+<!-- The S3 region -->
+<!ATTLIST s3-call region CDATA #REQUIRED>
+
+<!-- The S3 action -->
+<!ATTLIST s3-call action (list|put|get|delete) #REQUIRED>
