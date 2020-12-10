@@ -25,7 +25,9 @@ import it.greenvulcano.gvesb.virtual.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.w3c.dom.Node;
 
@@ -33,12 +35,12 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 public class S3Call implements CallOperation {
 
@@ -92,16 +94,38 @@ public class S3Call implements CallOperation {
         	
         	if("list".equals(operation)) {
         		
-        		//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/ListObjects.java
-        		ListObjectsV2Result result = s3.listObjectsV2(bucket);
-    	        List<S3ObjectSummary> objects = result.getObjectSummaries();
-    	        
-    	        for (S3ObjectSummary os : objects) {
-    	        	logger.info("Object: " + os.toString()/*getKey()*/);
-    	        }
-        		
-    	        logger.debug("test: " + operation);
-        		response = objects.toString();//listBucketObjects(s3, bucket);
+				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/ListObjects.java
+				String prefix = "", delimiter = "";
+				
+				if(gvBuffer.getProperty("S3_PREFIX") != "NULL") {
+					prefix = gvBuffer.getProperty("S3_PREFIX");
+				}
+				
+				if(gvBuffer.getProperty("S3_DELIMITER") != "NULL") {
+					delimiter = gvBuffer.getProperty("S3_DELIMITER");
+				}
+				
+				ListObjectsV2Request req = new ListObjectsV2Request();
+				req.setBucketName(bucket);
+				req.setPrefix(prefix);
+				req.setDelimiter(delimiter);
+				
+				ListObjectsV2Result result = s3.listObjectsV2(req);
+				
+				JSONObject json = new JSONObject();
+				
+				json.put("name", result.getBucketName());
+				json.put("prefix", result.getPrefix());
+				json.put("delimiter", result.getDelimiter());
+				
+				JSONArray objects = new JSONArray(result.getObjectSummaries());
+				JSONArray directories = new JSONArray(result.getCommonPrefixes());
+				
+				json.put("files", objects);
+				json.put("directories", directories);
+				
+				logger.debug("test: " + operation);
+				response = json.toString(1);
                 
 			} else if ("put".equals(operation)) {
 				
