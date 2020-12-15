@@ -71,4 +71,5 @@ Every time the adapter makes an action, it uses for the following GV properties:
 | S3_FILE_NAME  | put, get, delete        | The absolute path of the file to manage       |
 | S3_DELIMITER  | list                    | The folders delimiter. Default is a slash (/) |
 | S3_PREFIX     | list                    | The folder in which look for files            |
+
 Except for S3_FILE_NAME, the others are optional.
