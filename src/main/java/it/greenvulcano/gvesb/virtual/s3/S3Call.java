@@ -118,13 +118,12 @@ public class S3Call implements CallOperation {
 				json.put("prefix", result.getPrefix());
 				json.put("delimiter", result.getDelimiter());
 				
-				JSONArray objects = new JSONArray(result.getObjectSummaries());
-				JSONArray directories = new JSONArray(result.getCommonPrefixes());
+				JSONArray objects = new JSONArray(result.getObjectSummaries().toArray());
+				JSONArray directories = new JSONArray(result.getCommonPrefixes().toArray());
 				
 				json.put("files", objects);
 				json.put("directories", directories);
 				
-				logger.debug("test: " + operation);
 				response = json.toString(1);
                 
 			} else if ("put".equals(operation)) {

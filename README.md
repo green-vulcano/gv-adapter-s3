@@ -35,7 +35,7 @@ karaf@root()> bundle:install mvn:io.netty/netty-codec/4.1.54.Final
 karaf@root()> bundle:install mvn:io.netty/netty-transport/4.1.54.Final
 karaf@root()> bundle:install mvn:io.netty/netty-common/4.1.54.Final
 karaf@root()> bundle:install mvn:io.netty/netty-codec-http/4.1.54.Final
-karaf@root()> bundle:install -s -l 96 install mvn:it.greenvulcano.gvesb.adapter/gvvcl-s3/4.1.0-SNAPSHOT
+karaf@root()> bundle:install -s -l 96 mvn:it.greenvulcano.gvesb.adapter/gvvcl-s3/4.1.0-SNAPSHOT
 ```
 
 ### Using the VCL adapter in your GreenVulcano project
