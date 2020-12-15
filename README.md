@@ -2,9 +2,7 @@
 
 This is the implementation of a GreenVulcano VCL Adapter for the Amazon S3 Bucket service. It's meant to run as an Apache Karaf bundle.
 
-<span style="color:red">
-The adapter was developed in a rush and has a lot of room for improvement. Take everything you read with a grain of salt.
-</span>
+**The adapter was developed in a rush and has a lot of room for improvement. Take everything you read with a grain of salt.**
 
 ## Getting started
 
@@ -66,3 +64,11 @@ Here's an example of a list action:
 	</Channel>
 </System>
 ```
+
+Every time the adapter makes an action, it uses for the following GV properties:
+| Name          | Action in which is used | Description                                   |
+| -----------   | ----------------------- | --------------------------------------------- |
+| S3_FILE_NAME  | put, get, delete        | The absolute path of the file to manage       |
+| S3_DELIMITER  | list                    | The folders delimiter. Default is a slash (/) |
+| S3_PREFIX     | list                    | The folder in which look for files            |
+Except for S3_FILE_NAME, the others are optional.
