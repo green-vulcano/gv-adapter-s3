@@ -94,8 +94,11 @@ public class S3Call implements CallOperation {
         	
         	if("list".equals(operation)) {
         		
+        		logger.debug("Listing files in the " + bucket + " bucket");
+        		logger.debug("Looking in the directory: " + gvBuffer.getProperty("S3_PREFIX"));
+        		
 				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/ListObjects.java
-				String prefix = "", delimiter = "";
+				String prefix = "", delimiter = "/";
 				
 				if(gvBuffer.getProperty("S3_PREFIX") != "NULL") {
 					prefix = gvBuffer.getProperty("S3_PREFIX");
@@ -124,46 +127,51 @@ public class S3Call implements CallOperation {
 				json.put("files", objects);
 				json.put("directories", directories);
 				
-				response = json.toString(1);
+				gvBuffer.setObject(json.toString(1));
+				
+				logger.debug("List received from the " + bucket + " bucket");
                 
 			} else if ("put".equals(operation)) {
 				
-				logger.debug("Sending " + gvBuffer.getProperty("S3_FILE_NAME") + " to the " + bucket + "bucket");
+				logger.debug("Sending " + gvBuffer.getProperty("S3_FILE_NAME") + " to the " + bucket + " bucket");
 				
 				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/PutObject.java
 				InputStream object = new ByteArrayInputStream((byte[]) gvBuffer.getObject());
 				ObjectMetadata metadata = new ObjectMetadata();
+				metadata.setContentLength(object.available());
 				
 				PutObjectResult result = s3.putObject(bucket, gvBuffer.getProperty("S3_FILE_NAME"), object, metadata);
-				response = result.getVersionId();
 				
-				logger.debug("File " + gvBuffer.getProperty("S3_FILE_NAME") + " sent to the " + bucket + "bucket");
+				gvBuffer.setObject(result.getVersionId());
+				
+				logger.debug("File " + gvBuffer.getProperty("S3_FILE_NAME") + " sent to the " + bucket + " bucket");
 				
 			} else if ("get".equals(operation)) {
 				
-				logger.debug("Getting the " + gvBuffer.getProperty("S3_FILE_NAME") + " object from the " + bucket + "bucket");
+				logger.debug("Getting the " + gvBuffer.getProperty("S3_FILE_NAME") + " object from the " + bucket + " bucket");
 				
 				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/GetObject.java
 				S3Object o = s3.getObject(bucket, gvBuffer.getProperty("S3_FILE_NAME"));
 	            S3ObjectInputStream s3is = o.getObjectContent();
-				response = s3is.readAllBytes();
+	            
+				gvBuffer.setObject(s3is.readAllBytes());
+				
                 s3is.close();
                 
-                logger.debug("Object " + gvBuffer.getProperty("S3_FILE_NAME") + " received from the " + bucket + "bucket");
+                logger.debug("Object " + gvBuffer.getProperty("S3_FILE_NAME") + " received from the " + bucket + " bucket");
 				
 			} else if ("delete".equals(operation)) {
 				
-				logger.debug("Deleting the " + gvBuffer.getProperty("S3_FILE_NAME") + " object from the " + bucket + "bucket");
+				logger.debug("Deleting the " + gvBuffer.getProperty("S3_FILE_NAME") + " object from the " + bucket + " bucket");
 				
 				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/DeleteObject.java
 				s3.deleteObject(bucket, gvBuffer.getProperty("S3_FILE_NAME"));
-				response = "Object Deleted";
 				
-				logger.debug("Object " + gvBuffer.getProperty("S3_FILE_NAME") + " deleted from the " + bucket + "bucket");
+				gvBuffer.setObject("Object Deleted");
+				
+				logger.debug("Object " + gvBuffer.getProperty("S3_FILE_NAME") + " deleted from the " + bucket + " bucket");
 				
 			}
-        	
-        	gvBuffer.setObject(response.toString());
         	
         	logger.debug("End S3 call: " + operation);
 
