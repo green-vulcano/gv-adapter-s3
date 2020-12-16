@@ -3,40 +3,27 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
 	xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>it.greenvulcano.gvesb.adapter</groupId>
-  <artifactId>gvvcl-s3</artifactId>
-  
-  <version>4.1.0-SNAPSHOT</version>
-  <packaging>bundle</packaging>
-  
-  <name>GreenVulcano ESB Adapter for Amazon S3 Bucket</name>
-  <description>ABC</description>
-  
-  <properties>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>it.greenvulcano.gvesb.adapter</groupId>
+	<artifactId>gvvcl-s3</artifactId>
+
+	<version>4.1.0-SNAPSHOT</version>
+	<packaging>bundle</packaging>
+
+	<name>GreenVulcano ESB Adapter for Amazon S3</name>
+
+	<properties>
 		<osgi.version>5.0.0</osgi.version>
 		<gvesb.version>4.1.0</gvesb.version>
 		<maven-compiler-plugin.version>2.5.1</maven-compiler-plugin.version>
 		<maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
-		<cloud.nexus.content>http://mvn.greenvulcano.com/nexus/content</cloud.nexus.content>
 	</properties>
 
 	<repositories>
 		<repository>
-			<id>gv</id>
+			<id>greenvulcano</id>
 			<url>http://mvn.greenvulcano.com/nexus/content/groups/public</url>
 			<name>GreenVulcano</name>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>nexus-cloud</id>
-			<name>Cloud Nexus instance - PUBLIC</name>
-			<url>${cloud.nexus.content}/groups/public</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
 			<snapshots>
 				<enabled>true</enabled>
 			</snapshots>
@@ -45,14 +32,14 @@
 
 	<distributionManagement>
 		<repository>
-			<id>nexus-cloud</id>
-			<name>Cloud Nexus instance - RELEASES </name>
-			<url>${cloud.nexus.content}/repositories/releases</url>
+			<id>greenvulcano</id>
+			<name>GreenVulcano Maven Repository - RELEASES </name>
+			<url>http://mvn.greenvulcano.com/content</url>
 		</repository>
 		<snapshotRepository>
-			<id>nexus-cloud</id>
-			<name>Cloud Nexus instance - SNAPSHOTS</name>
-			<url>${cloud.nexus.content}/repositories/snapshots</url>
+			<id>greenvulcano</id>
+			<name>GreenVulcano Maven Repository - SNAPSHOTS</name>
+			<url>http://mvn.greenvulcano.com/content</url>
 		</snapshotRepository>
 	</distributionManagement>
 
@@ -102,17 +89,17 @@
 			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
-		    <groupId>com.amazonaws</groupId>
-		    <artifactId>aws-java-sdk-osgi</artifactId>
-		    <version>1.11.911</version>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk-osgi</artifactId>
+			<version>1.11.911</version>
 		</dependency>
-		
+
 		<dependency>
-		     <groupId>org.json</groupId>
-		     <artifactId>json</artifactId>
-		     <version>20190722</version>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20190722</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -155,7 +142,7 @@
 					<instructions>
 						<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
 						<Bundle-Version>${project.version}</Bundle-Version>
-						<Export-Package/>
+						<Export-Package />
 						<Import-Package>*</Import-Package>
 						<Bundle-Activator>it.greenvulcano.gvesb.channel.s3.Activator</Bundle-Activator>
 					</instructions>
@@ -187,5 +174,5 @@
 			</plugin>
 		</plugins>
 	</build>
-  
+
 </project>
