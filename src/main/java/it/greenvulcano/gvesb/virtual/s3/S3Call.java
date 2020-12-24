@@ -22,19 +22,23 @@ package it.greenvulcano.gvesb.virtual.s3;
 import it.greenvulcano.configuration.XMLConfig;
 import it.greenvulcano.gvesb.buffer.GVBuffer;
 import it.greenvulcano.gvesb.virtual.*;
+import it.greenvulcano.util.metadata.PropertiesHandler;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URL;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.w3c.dom.Node;
 
+import com.amazonaws.HttpMethod;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -53,6 +57,11 @@ public class S3Call implements CallOperation {
     private String operation;
     private String bucket;
     
+    private String akidResolved;
+    private String skidResolved;
+    private String dcResolved;
+    private String bucketResolved;
+    
     protected Object response;
     
     private AmazonS3 s3 = null;
@@ -70,11 +79,6 @@ public class S3Call implements CallOperation {
             operation = XMLConfig.get(node, "@action");
             bucket = XMLConfig.get(node, "@bucket");
             
-            BasicAWSCredentials credentials = new BasicAWSCredentials(akid, skid);
-			s3 = AmazonS3ClientBuilder.standard()
-					.withCredentials(new AWSStaticCredentialsProvider(credentials))
-					.withRegion(dc)
-					.build();
             logger.debug("Configured S3 {} operation ", operation);
 
         } catch (Exception e) {
@@ -89,12 +93,23 @@ public class S3Call implements CallOperation {
     public GVBuffer perform(GVBuffer gvBuffer) throws ConnectionException, CallException, InvalidDataException {
 
         try {
+            
+            akidResolved = PropertiesHandler.expand(akid, gvBuffer);
+            skidResolved = PropertiesHandler.expand(skid, gvBuffer);
+            dcResolved = PropertiesHandler.expand(dc, gvBuffer);
+            bucketResolved = PropertiesHandler.expand(bucket, gvBuffer);
+            
+            BasicAWSCredentials credentials = new BasicAWSCredentials(akidResolved, skidResolved);
+			s3 = AmazonS3ClientBuilder.standard()
+					.withCredentials(new AWSStaticCredentialsProvider(credentials))
+					.withRegion(dcResolved)
+					.build();
         	
         	logger.debug("Starting S3 call: " + operation);
         	
         	if("list".equals(operation)) {
         		
-        		logger.debug("Listing files in the " + bucket + " bucket");
+        		logger.debug("Listing files in the " + bucketResolved + " bucket");
         		logger.debug("Looking in the directory: " + gvBuffer.getProperty("S3_PREFIX"));
         		
 				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/ListObjects.java
@@ -109,7 +124,7 @@ public class S3Call implements CallOperation {
 				}
 				
 				ListObjectsV2Request req = new ListObjectsV2Request();
-				req.setBucketName(bucket);
+				req.setBucketName(bucketResolved);
 				req.setPrefix(prefix);
 				req.setDelimiter(delimiter);
 				
@@ -129,47 +144,79 @@ public class S3Call implements CallOperation {
 				
 				gvBuffer.setObject(json.toString(1));
 				
-				logger.debug("List received from the " + bucket + " bucket");
+				logger.debug("List received from the " + bucketResolved + " bucket");
                 
 			} else if ("put".equals(operation)) {
 				
-				logger.debug("Sending " + gvBuffer.getProperty("S3_FILE_NAME") + " to the " + bucket + " bucket");
+				logger.debug("Sending " + gvBuffer.getProperty("S3_FILE_NAME") + " to the " + bucketResolved + " bucket");
 				
 				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/PutObject.java
 				InputStream object = new ByteArrayInputStream((byte[]) gvBuffer.getObject());
 				ObjectMetadata metadata = new ObjectMetadata();
 				metadata.setContentLength(object.available());
 				
-				PutObjectResult result = s3.putObject(bucket, gvBuffer.getProperty("S3_FILE_NAME"), object, metadata);
+				PutObjectResult result = s3.putObject(bucketResolved, gvBuffer.getProperty("S3_FILE_NAME"), object, metadata);
 				
 				gvBuffer.setObject(result.getVersionId());
 				
-				logger.debug("File " + gvBuffer.getProperty("S3_FILE_NAME") + " sent to the " + bucket + " bucket");
+				logger.debug("File " + gvBuffer.getProperty("S3_FILE_NAME") + " sent to the " + bucketResolved + " bucket");
 				
 			} else if ("get".equals(operation)) {
 				
-				logger.debug("Getting the " + gvBuffer.getProperty("S3_FILE_NAME") + " object from the " + bucket + " bucket");
+				logger.debug("Getting the " + gvBuffer.getProperty("S3_FILE_NAME") + " object from the " + bucketResolved + " bucket");
 				
 				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/GetObject.java
-				S3Object o = s3.getObject(bucket, gvBuffer.getProperty("S3_FILE_NAME"));
-	            S3ObjectInputStream s3is = o.getObjectContent();
-	            
+				S3Object o = s3.getObject(bucketResolved, gvBuffer.getProperty("S3_FILE_NAME"));
+				S3ObjectInputStream s3is = o.getObjectContent();
+				
 				gvBuffer.setObject(s3is.readAllBytes());
 				
-                s3is.close();
-                
-                logger.debug("Object " + gvBuffer.getProperty("S3_FILE_NAME") + " received from the " + bucket + " bucket");
+				s3is.close();
+				
+				logger.debug("Object " + gvBuffer.getProperty("S3_FILE_NAME") + " received from the " + bucketResolved + " bucket");
 				
 			} else if ("delete".equals(operation)) {
 				
-				logger.debug("Deleting the " + gvBuffer.getProperty("S3_FILE_NAME") + " object from the " + bucket + " bucket");
+				logger.debug("Deleting the " + gvBuffer.getProperty("S3_FILE_NAME") + " object from the " + bucketResolved + " bucket");
 				
 				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/DeleteObject.java
-				s3.deleteObject(bucket, gvBuffer.getProperty("S3_FILE_NAME"));
+				s3.deleteObject(bucketResolved, gvBuffer.getProperty("S3_FILE_NAME"));
 				
 				gvBuffer.setObject("Object Deleted");
 				
-				logger.debug("Object " + gvBuffer.getProperty("S3_FILE_NAME") + " deleted from the " + bucket + " bucket");
+				logger.debug("Object " + gvBuffer.getProperty("S3_FILE_NAME") + " deleted from the " + bucketResolved + " bucket");
+				
+			} else if ("copy".equals(operation)) {
+				
+				logger.debug("Copying the " + gvBuffer.getProperty("S3_FILE_NAME") + " object from the " + bucketResolved + " bucket as " + gvBuffer.getProperty("S3_FILE_NAME_NEW"));
+				
+				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/CopyObject.java
+				s3.copyObject(bucketResolved, gvBuffer.getProperty("S3_FILE_NAME"), bucketResolved, gvBuffer.getProperty("S3_FILE_NAME_NEW"));
+				
+				gvBuffer.setObject("Object Copied");
+				
+				logger.debug("Object " + gvBuffer.getProperty("S3_FILE_NAME") + " copied from the " + bucketResolved + " bucket as " + gvBuffer.getProperty("S3_FILE_NAME_NEW"));
+				
+			} else if ("link".equals(operation)) {
+				
+				logger.debug("Generating link of " + gvBuffer.getProperty("S3_FILE_NAME") + " object in the " + bucketResolved + " bucket");
+				
+				//Example (official): https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/java/example_code/s3/src/main/java/aws/example/s3/GeneratePresignedURL.java
+				
+				java.util.Date expiration = new java.util.Date();
+				long time = expiration.getTime();
+				time += Integer.valueOf(gvBuffer.getProperty("S3_LINK_EXPIRATION"));
+				expiration.setTime(time);
+				
+				GeneratePresignedUrlRequest generatePresignedUrlRequest =
+				        new GeneratePresignedUrlRequest(bucketResolved, gvBuffer.getProperty("S3_FILE_NAME"))
+				                .withMethod(HttpMethod.GET)
+				                .withExpiration(expiration);
+				URL url = s3.generatePresignedUrl(generatePresignedUrlRequest);
+				
+				gvBuffer.setObject(url.toString());
+				
+				logger.debug("Pre-Signed URL generated: " + url.toString());
 				
 			}
         	
